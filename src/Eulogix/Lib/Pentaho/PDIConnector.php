@@ -17,51 +17,99 @@ namespace Eulogix\Lib\Pentaho;
 
 class PDIConnector {
 
+    const DEFAULT_JOB_PATH = '/';
+
     /**
      * @var string
      */
-   private $repoName, $user, $password;
+    private $repositoryName, $user, $password;
+
+    /**
+     * @var array
+     */
+    private $configParameters;
 
     /**
      * @param string $repoName
      * @param string $user
      * @param string $password
+     * @param array $configParameters
      */
-   function __construct($repoName, $user, $password) {
-        $this->repoName = $repoName;    
-        $this->user = $user;    
-        $this->password = $password;    
-   }
-   
-   private function _getBaseCmdLine($jobName=null,$jobPath="/") {
-        $cmd = !WINSERVER ? "kitchen.sh " : "Kitchen.bat ";
-        $cmd.="/rep:".$this->repoName." /user:".$this->user." /pass:".$this->password." ";    
+    function __construct($repoName, $user, $password, array $configParameters = []) {
+        $this->repositoryName = $repoName;
+        $this->user = $user;
+        $this->password = $password;
+        $this->setConfigParameters($configParameters);
+    }
+
+    /**
+     * @return array
+     */
+    public function getConfigParameters()
+    {
+        return $this->configParameters;
+    }
+
+    /**
+     * @param array $configParameters
+     * @return $this
+     */
+    public function setConfigParameters($configParameters)
+    {
+        $this->configParameters = $configParameters;
+        return $this;
+    }
+
+    /**
+     * @param string $jobName
+     * @param string $jobPath
+     * @param array $parameters
+     * @return string
+     */
+    public function runJob($jobName, $jobPath=self::DEFAULT_JOB_PATH, $parameters=[]) {
+        $cmd = $this->getBaseCmdLine($jobName, $jobPath);
+        $parameters = array_merge($this->getConfigParameters(), $parameters);
+        foreach($parameters as $k=>$v)
+            $cmd.="/param:$k=\"$v\" ";
+        return shell_exec($cmd);
+    }
+
+    /**
+     * @param string $jobName
+     * @param string $jobPath
+     * @return array
+     */
+    public function getExpectedParameters($jobName, $jobPath=self::DEFAULT_JOB_PATH) {
+        $ret = [];
+
+        $cmd = $this->getBaseCmdLine($jobName, $jobPath);
+        $cmd.=" /listparam"." 2>&1";
+        $output = shell_exec($cmd);
+
+        preg_match_all('/^Parameter: (.+?)=.*?(, default=(.*?) |): *(.*?)$/im', $output, $m, PREG_SET_ORDER);
+
+        if($m)
+            foreach($m as $mm)
+                $ret[] = [
+                    'name'          => $mm[1],
+                    'default'       => $mm[3],
+                    'description'   => $mm[4]
+                ];
+
+        return $ret;
+    }
+
+    /**
+     * @param string $jobName
+     * @param string $jobPath
+     * @return string
+     */
+    private function getBaseCmdLine($jobName=null, $jobPath=self::DEFAULT_JOB_PATH) {
+        $cmd = "kitchen.sh ";
+        $cmd.="/rep:".$this->repositoryName." /user:".$this->user." /pass:".$this->password." ";
         if($jobName)
             $cmd.=" /job:\"$jobName\" /dir:\"$jobPath\" ";
         return $cmd;
-   }
-   
-   function getConfigParameters() {
-       return array();
-   }
-   
-   function runJob($jobName,$jobPath='/',$parameters=array()) {
-        $cmd = $this->_getBaseCmdLine($jobName,$jobPath);
-        $parameters = array_merge($this->getConfigParameters(),$parameters);                
-        foreach($parameters as $k=>$v)
-            $cmd.="/param:$k=\"$v\" ";
-        echo "cmd: $cmd\n";
-        return shell_exec($cmd);    
-   }
-   
-   function getExpectedParameters($jobName,$jobPath='/') {
-       $cmd = $this->_getBaseCmdLine($jobName,$jobPath);
-       $cmd.=" /listparam"." 2>&1";
-       $output = shell_exec($cmd);
-       preg_match_all('/^Parameter: (.+?)=.*?(, default=(.*?) |): *(.*?)$/im',$output,$m,PREG_SET_ORDER);   
-       if($m) foreach($m as $mm)
-                    $params[]=array('name'=>$mm[1],'default'=>$mm[3],'description'=>$mm[4]);
-       return $params;
-   }
+    }
    
 }
