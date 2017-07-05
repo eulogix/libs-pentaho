@@ -15,7 +15,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Eulogix\\Lib\\": "src/Eulogix/Lib/"
+            "Eulogix\\Lib\\": "src/Eulogix/Lib/",
+            "Eulogix\\Lib\\Pentaho\\Tests": "tests/"
         }
     }
 }

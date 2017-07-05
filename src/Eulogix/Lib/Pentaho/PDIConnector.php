@@ -78,6 +78,7 @@ class PDIConnector {
      * @param string $jobName
      * @param string $jobPath
      * @return array
+     * @throws \Exception
      */
     public function getExpectedParameters($jobName, $jobPath=self::DEFAULT_JOB_PATH) {
         $ret = [];
@@ -86,12 +87,14 @@ class PDIConnector {
         $cmd.=" /listparam"." 2>&1";
         $output = shell_exec($cmd);
 
+        if(preg_match('/command not found$/sim', $output))
+            throw new \Exception("kitchen.sh not in PATH");
+
         preg_match_all('/^Parameter: (.+?)=.*?(, default=(.*?) |): *(.*?)$/im', $output, $m, PREG_SET_ORDER);
 
         if($m)
             foreach($m as $mm)
-                $ret[] = [
-                    'name'          => $mm[1],
+                $ret[ $mm[1] ] = [
                     'default'       => $mm[3],
                     'description'   => $mm[4]
                 ];
