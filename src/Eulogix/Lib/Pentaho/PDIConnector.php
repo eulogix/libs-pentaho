@@ -36,9 +36,9 @@ class PDIConnector {
      * @param array $configParameters
      */
     function __construct($repoName, $user, $password, array $configParameters = []) {
-        $this->repositoryName = $repoName;
-        $this->user = $user;
-        $this->password = $password;
+        $this->setRepositoryName($repoName);
+        $this->setUser($user);
+        $this->setPassword($password);
         $this->setConfigParameters($configParameters);
     }
 
@@ -61,6 +61,60 @@ class PDIConnector {
     }
 
     /**
+     * @return string
+     */
+    public function getRepositoryName()
+    {
+        return $this->repositoryName;
+    }
+
+    /**
+     * @param string $repositoryName
+     * @return $this
+     */
+    public function setRepositoryName($repositoryName)
+    {
+        $this->repositoryName = $repositoryName;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param string $user
+     * @return $this
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * @param string $password
+     * @return $this
+     */
+    public function setPassword($password)
+    {
+        $this->password = $password;
+        return $this;
+    }
+
+    /**
      * @param string $jobName
      * @param string $jobPath
      * @param array $parameters
@@ -71,6 +125,9 @@ class PDIConnector {
         $parameters = array_merge($this->getConfigParameters(), $parameters);
         foreach($parameters as $k=>$v)
             $cmd.="/param:$k=\"$v\" ";
+
+        echo "\n\n\n\n$cmd\n\n\n\n\n";
+
         return shell_exec($cmd);
     }
 
@@ -80,7 +137,7 @@ class PDIConnector {
      * @return array
      * @throws \Exception
      */
-    public function getExpectedParameters($jobName, $jobPath=self::DEFAULT_JOB_PATH) {
+    public function getExpectedJobParameters($jobName, $jobPath=self::DEFAULT_JOB_PATH) {
         $ret = [];
 
         $cmd = $this->getBaseCmdLine($jobName, $jobPath);

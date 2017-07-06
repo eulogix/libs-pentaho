@@ -30,7 +30,7 @@ class BaseTest extends \PHPUnit_Framework_TestCase
     {
         $c = $this->getConnector();
 
-        $params = $c->getExpectedParameters('test_job');
+        $params = $c->getExpectedJobParameters('test_job');
 
         $this->assertEquals(1, count($params));
         $this->assertEquals([
