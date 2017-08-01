@@ -185,7 +185,7 @@ class PDIConnector {
      */
     private function getBaseCmdLine($jobName=null, $jobPath=self::DEFAULT_JOB_PATH) {
         $cmd = ($this->getSudoUser() ? "sudo -u {$this->getSudoUser()} " : '' ). "kitchen.sh";
-        $cmd.=" /rep: {$this->getRepositoryName()} /user:{$this->getUser()} /pass:{$this->getPassword()}";
+        $cmd.=" /rep:{$this->getRepositoryName()} /user:{$this->getUser()} /pass:{$this->getPassword()}";
         if($jobName)
             $cmd.=" /job:\"{$jobName}\" /dir:\"{$jobPath}\" ";
         return $cmd;
