@@ -22,7 +22,7 @@ class PDIConnector {
     /**
      * @var string
      */
-    private $repositoryName, $user, $password;
+    private $repositoryName, $user, $password, $sudoUser;
 
     /**
      * @var array
@@ -33,9 +33,10 @@ class PDIConnector {
      * @param string $repoName
      * @param string $user
      * @param string $password
+     * @param string $sudoUser
      * @param array $configParameters
      */
-    function __construct($repoName, $user, $password, array $configParameters = []) {
+    function __construct($repoName, $user, $password, $sudoUser=null, array $configParameters = []) {
         $this->setRepositoryName($repoName);
         $this->setUser($user);
         $this->setPassword($password);
@@ -115,6 +116,24 @@ class PDIConnector {
     }
 
     /**
+     * @return string
+     */
+    public function getSudoUser()
+    {
+        return $this->sudoUser;
+    }
+
+    /**
+     * @param string $sudoUser
+     * @return $this
+     */
+    public function setSudoUser($sudoUser)
+    {
+        $this->sudoUser = $sudoUser;
+        return $this;
+    }
+
+    /**
      * @param string $jobName
      * @param string $jobPath
      * @param array $parameters
@@ -165,10 +184,10 @@ class PDIConnector {
      * @return string
      */
     private function getBaseCmdLine($jobName=null, $jobPath=self::DEFAULT_JOB_PATH) {
-        $cmd = "kitchen.sh ";
-        $cmd.="/rep:".$this->repositoryName." /user:".$this->user." /pass:".$this->password." ";
+        $cmd = ($this->getSudoUser() ? "sudo -u {$this->getSudoUser()} " : '' ). "kitchen.sh";
+        $cmd.=" /rep: {$this->getRepositoryName()} /user:{$this->getUser()} /pass:{$this->getPassword()}";
         if($jobName)
-            $cmd.=" /job:\"$jobName\" /dir:\"$jobPath\" ";
+            $cmd.=" /job:\"{$jobName}\" /dir:\"{$jobPath}\" ";
         return $cmd;
     }
    
