@@ -137,9 +137,10 @@ class PDIConnector {
      * @param string $jobName
      * @param string $jobPath
      * @param array $parameters
+     * @param int $exitCode
      * @return string
      */
-    public function runJob($jobName, $jobPath=self::DEFAULT_JOB_PATH, $parameters=[]) {
+    public function runJob($jobName, $jobPath=self::DEFAULT_JOB_PATH, $parameters=[], &$exitCode = null) {
         $cmd = $this->getBaseCmdLine($jobName, $jobPath);
         $parameters = array_merge($this->getConfigParameters(), $parameters);
         foreach($parameters as $k=>$v)
@@ -147,7 +148,9 @@ class PDIConnector {
 
         echo "\n\n\n\n$cmd\n\n\n\n\n";
 
-        return shell_exec($cmd);
+        $output = [];
+        exec($cmd, $output, $exitCode);
+        return implode("\n",$output);
     }
 
     /**
