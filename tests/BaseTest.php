@@ -11,6 +11,7 @@
 
 namespace Eulogix\Lib\Pentaho\Tests;
 
+use Eulogix\Cool\Lib\Cool;
 use Eulogix\Lib\Pentaho\PDIConnector;
 
 /**
@@ -38,7 +39,7 @@ class BaseTest extends \PHPUnit_Framework_TestCase
             'description' => 'The name of the temporary file to create'
         ], $params['file_name']);
 
-        $tempFile = tempnam(sys_get_temp_dir(),'TMP');
+        $tempFile = tempnam(Cool::getInstance()->getFactory()->getSettingsManager()->getTempFolder(),'TMP');
         $c->runJob('test_job', PDIConnector::DEFAULT_JOB_PATH, [
             'file_name' => $tempFile
         ]);
