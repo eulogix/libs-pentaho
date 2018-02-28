@@ -12,6 +12,9 @@
 namespace Eulogix\Lib\Pentaho\Tests;
 
 use Eulogix\Cool\Lib\Cool;
+use Eulogix\Lib\Pentaho\CartePDIConnector;
+use Eulogix\Lib\Pentaho\ConsolePDIConnector;
+use Eulogix\Lib\Pentaho\JobExecutionResult;
 use Eulogix\Lib\Pentaho\PDIConnector;
 
 /**
@@ -27,32 +30,57 @@ class BaseTest extends \PHPUnit_Framework_TestCase
      * - a repository named libs-pentaho_test_repo is defined in repositories.xml and points to the "kettlerepo" folder in tests
      */
 
-    public function testLib()
+    public function testConsoleConnector()
     {
-        $c = $this->getConnector();
+        $consoleConnector = $this->getConsoleConnector();
+        if($consoleConnector->isAvailable()) {
 
-        $params = $c->getExpectedJobParameters('test_job');
+            $params = $consoleConnector->getExpectedJobParameters('test_job');
 
-        $this->assertEquals(1, count($params));
-        $this->assertEquals([
-            'default' => '/tmp/test_job_tmp_file',
-            'description' => 'The name of the temporary file to create'
-        ], $params['file_name']);
+            $this->assertEquals(1, count($params));
 
-        $tempFile = tempnam(Cool::getInstance()->getFactory()->getSettingsManager()->getTempFolder(),'TMP');
-        $c->runJob('test_job', PDIConnector::DEFAULT_JOB_PATH, [
-            'file_name' => $tempFile
-        ]);
+            $this->assertEquals([
+                'default' => 'hello',
+                'description' => 'Something to log'
+            ], $params['something']);
 
-        $this->assertEquals('test', file_get_contents($tempFile));
-        @unlink($tempFile);
 
+            $this->checkTestJob($consoleConnector);
+
+        } else echo "\nPDI Console connector not available\n";
+    }
+
+    public function testCarteConnector()
+    {
+        $carteConnector = $this->getCarteConnector();
+        if($carteConnector->isAvailable()) {
+            $this->checkTestJob($carteConnector);
+        } else echo "\nPDI Carte connector not available\n";
     }
 
     /**
-     * @return PDIConnector
+     * @param PDIConnector $connector
      */
-    private function getConnector() {
-        return  new PDIConnector('pentaho-libs_test_repo', 'fake', 'fake');
+    private function checkTestJob(PDIConnector $connector) {
+        $result = $connector->runJob('test_job', ConsolePDIConnector::DEFAULT_JOB_PATH, [
+            'something' => "beautiful"
+        ]);
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertTrue(preg_match('/TEST_LOG - beautiful/', $result->getOutput()));
+    }
+
+    /**
+     * @return ConsolePDIConnector
+     */
+    private function getConsoleConnector() {
+        return  new ConsolePDIConnector('pentaho-libs_test_repo', 'fake', 'fake');
+    }
+
+    /**
+     * @return CartePDIConnector
+     */
+    private function getCarteConnector() {
+        return  new CartePDIConnector('http://pentaho:8080', 'cluster', 'cluster', 'pentaho-libs_test_repo');
     }
 }
