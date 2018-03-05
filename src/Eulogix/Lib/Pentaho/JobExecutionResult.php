@@ -81,7 +81,7 @@ class JobExecutionResult
     public function setError($error)
     {
         $this->error = $error;
-        $this->setSuccess(false);
+        $this->setSuccess(!$error);
         return $this;
     }
 

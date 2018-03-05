@@ -125,7 +125,7 @@ class CartePDIConnector extends PDIConnector
                 'xml' => 'Y',
                 'rep' => $this->getRepositoryName(),
                 'job' => $completeJobPath,
-            ], $parameters);
+            ], $parameters ?? []);
 
             if($this->getRepositoryUser() && $this->getRepositoryPassword())
             {
@@ -142,6 +142,8 @@ class CartePDIConnector extends PDIConnector
                     $status = $this->getJobStatusWaitingUntilFinished($jobName, $ret->getId());
                     if($status['error_desc'])
                         $ret->setError($status['error_desc']);
+                    else $ret->setSuccess(true);
+
                     $ret->setOutput($status['logging_string']);
 
                 } else {
@@ -168,7 +170,7 @@ class CartePDIConnector extends PDIConnector
             'xml' => 'Y'
         ]);
 
-        if(preg_match('/<!\[CDATA\[(.+?)\]\]>/sim', $status['logging_string'], $m)) {
+        if(preg_match('/\[CDATA\[(.+?)\]\]/sim', $status['logging_string'], $m)) {
             $d1 = base64_decode($m[1]);
             $status['logging_string'] = gzdecode($d1);
         }
@@ -177,6 +179,8 @@ class CartePDIConnector extends PDIConnector
     }
 
     /**
+     * carte takes a while to recover log lines, so waiting for result to be there ensures that we get the job
+     * log, otherwise it would be empty or truncated
      * @param $jobName
      * @param $executionId
      * @return array
@@ -185,7 +189,7 @@ class CartePDIConnector extends PDIConnector
         do {
             $status = $this->getJobStatus($jobName, $executionId);
             sleep(2);
-        } while($status['status_desc'] == 'Running');
+        } while($status['status_desc'] == 'Running' || !isset($status['result']));
         return $status;
     }
 
